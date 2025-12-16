@@ -1,25 +1,64 @@
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // 🛑 IMPORTANT: Update the API URL to your live Render service 
+    const RENDER_API_URL = 'https://elvryn.onrender.com';
+
     // Select all necessary elements
     const videoUrlInput = document.getElementById('video-url');
     const fetchBtn = document.getElementById('fetch-btn');
     const videoInfoCard = document.getElementById('video-info-card');
     const videoTitle = document.getElementById('video-title');
     const videoThumbnail = document.getElementById('video-thumbnail');
+    const formatsListContainer = document.querySelector('.formats-list');
     const statusMessage = document.getElementById('status-message');
     
-    // --- SIMULATED DATA ---
-    // A placeholder for the video information we would get from a backend API
-    const simulatedVideoData = {
-        title: "Introduction to Modern Web Design (HTML/CSS/JS)",
-        thumbnailUrl: "https://via.placeholder.com/480x270/6366f1/FFFFFF?text=Awesome+Video+Thumbnail",
-        formats: [
-            { quality: "1080p", size: "150 MB" },
-            { quality: "720p", size: "90 MB" },
-            { quality: "MP3", size: "5 MB" }
-        ]
-    };
+    // --- UTILITY FUNCTIONS ---
 
-    // --- FUNCTIONALITY ---
+    // Function to display status messages
+    function displayStatus(message, type) {
+        statusMessage.textContent = message;
+        statusMessage.classList.remove('hidden', 'success', 'error');
+        statusMessage.classList.add(type);
+    }
+    
+    // Function to populate the card with data received from the backend
+    function loadVideoInfo(data) {
+        // Clear previous formats
+        const oldFormats = formatsListContainer.querySelectorAll('.format-option');
+        oldFormats.forEach(f => f.remove());
+
+        // Add the heading back if it was removed
+        let heading = formatsListContainer.querySelector('h3');
+        if (!heading) {
+            heading = document.createElement('h3');
+            heading.textContent = "Available Downloads:";
+            formatsListContainer.prepend(heading);
+        }
+
+        // Use data returned from the server
+        videoTitle.textContent = data.title;
+        // Note: The backend is currently sending a placeholder thumbnail URL.
+        videoThumbnail.src = data.thumbnailUrl || "https://via.placeholder.com/480x270/AAAAAA/FFFFFF?text=No+Image"; 
+        
+        // Loop through the formats array sent by the server
+        data.formats.forEach(format => {
+            const optionDiv = document.createElement('div');
+            optionDiv.classList.add('format-option');
+            optionDiv.setAttribute('data-quality', format.quality.toLowerCase());
+            
+            optionDiv.innerHTML = `
+                <span class="format-label">${format.quality}</span>
+                <span class="format-size">${format.size || 'Size N/A'}</span>
+                <button class="btn download-btn" data-link="${format.link || '#'}">Download</button>
+            `;
+            formatsListContainer.appendChild(optionDiv);
+        });
+        
+        // This makes the card visible
+        videoInfoCard.classList.remove('hidden');
+    }
+
+    // --- MAIN EVENT LISTENER: Fetch Button ---
 
     fetchBtn.addEventListener('click', () => {
         const url = videoUrlInput.value.trim();
@@ -34,50 +73,54 @@ document.addEventListener('DOMContentLoaded', () => {
         videoInfoCard.classList.add('hidden');
         statusMessage.classList.add('hidden');
         
-        // 2. Simulate API Call Delay (3 seconds)
-        setTimeout(() => {
-            
-            // 3. End Loading State
+        // 2. Real API Call to your Render Backend
+        fetch(`${RENDER_API_URL}/api/fetch-video`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        })
+        .then(response => {
+            if (!response.ok) {
+                // Handle HTTP error statuses (4xx, 5xx)
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
             fetchBtn.classList.remove('loading');
-            
-            // For a real app, you'd handle network errors here.
-            // For the demo, we always succeed.
 
-            loadVideoInfo(simulatedVideoData);
+            if (data.error) {
+                displayStatus(`Error from server: ${data.error}`, 'error');
+                return;
+            }
+            
+            loadVideoInfo(data);
             displayStatus('Video information fetched successfully!', 'success');
-
-        }, 3000); // 3-second delay
-    });
-
-    // Function to populate the card with data
-    function loadVideoInfo(data) {
-        videoTitle.textContent = data.title;
-        videoThumbnail.src = data.thumbnailUrl;
-        
-        // This makes the card visible
-        videoInfoCard.classList.remove('hidden');
-    }
-
-    // Function to handle the Download buttons
-    document.querySelectorAll('.download-btn').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const formatOption = event.target.closest('.format-option');
-            const quality = formatOption.getAttribute('data-quality');
-            
-            // SIMULATION of download start
-            // The actual download link would be generated by your backend here.
-            
-            alert(`Simulating download for: ${quality} format. A real download would start now!`);
-            
-            // In a real scenario, you would redirect the user to the generated file URL
-            // window.location.href = 'YOUR_BACKEND_GENERATED_DOWNLOAD_LINK';
+        })
+        .catch(error => {
+            fetchBtn.classList.remove('loading');
+            console.error('Fetch error:', error);
+            displayStatus(`Connection Error: ${error.message}. Check the Render logs.`, 'error');
         });
     });
 
-    // Function to display status messages
-    function displayStatus(message, type) {
-        statusMessage.textContent = message;
-        statusMessage.classList.remove('hidden', 'success', 'error');
-        statusMessage.classList.add(type);
-    }
+    // --- EVENT LISTENER for Dynamic Download Buttons ---
+    // Use event delegation since download buttons are created dynamically
+    document.querySelector('.downloader-container').addEventListener('click', (event) => {
+        if (event.target.classList.contains('download-btn')) {
+            const downloadLink = event.target.getAttribute('data-link');
+            const quality = event.target.closest('.format-option').getAttribute('data-quality');
+            
+            if (downloadLink && downloadLink !== '#') {
+                // In a real application, this would redirect the user to the generated file link
+                // window.location.href = downloadLink; 
+                displayStatus(`Simulating download for ${quality}. Check console for link.`, 'success');
+                console.log(`Simulated download requested for: ${downloadLink}`);
+            } else {
+                 // The simulated data currently has '#' links.
+                 alert(`Simulating download for: ${quality} format. A real download would start now!`);
+            }
+        }
+    });
+
 });

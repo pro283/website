@@ -10,7 +10,7 @@ app.use(express.json());
 // --- 🛑 IMPORTANT: CONFIGURE CORS ---
 // You must replace 'YOUR_GITHUB_PAGES_URL' with your actual live GitHub Pages URL 
 // (e.g., https://pro283.github.io/website)
-const FRONTEND_URL = 'YOUR_GITHUB_PAGES_URL_HERE'; 
+const FRONTEND_URL = 'elvryn.xyz'; 
 app.use(cors({
     origin: FRONTEND_URL, 
     methods: 'GET,POST',

@@ -1,0 +1,208 @@
+/* --- 1. GLOBAL VARIABLES & RESET --- */
+:root {
+    /* Light Theme (Default) */
+    --bg-color: #f3f4f6;
+    --text-color: #1f2937;
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --primary-color: #6366f1; /* Indigo */
+    --primary-hover: #4f46e5;
+    --secondary-bg: #e5e7eb;
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
+    --nav-glass: rgba(255, 255, 255, 0.7);
+    --border-color: rgba(0,0,0,0.05);
+}
+
+/* Dark Theme Variables */
+body.dark-theme {
+    --bg-color: #0f172a;
+    --text-color: #f3f4f6;
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --primary-color: #818cf8;
+    --primary-hover: #6366f1;
+    --secondary-bg: #1e293b;
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --nav-glass: rgba(15, 23, 42, 0.7);
+    --border-color: rgba(255,255,255,0.05);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.3s ease, color 0.3s ease; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- 2. NAVIGATION BAR --- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 5%;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 100;
+    background: var(--nav-glass);
+    backdrop-filter: blur(10px); /* Glass effect */
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(45deg, var(--primary-color), #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.nav-links { list-style: none; display: flex; gap: 2rem; }
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 500;
+    font-size: 0.95rem;
+    position: relative;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.nav-links a:hover, .nav-links a.active { opacity: 1; }
+
+/* Underline animation for links */
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -4px;
+    left: 0;
+    background-color: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+.nav-links a:hover::after { width: 100%; }
+
+/* --- 3. THEME TOGGLE BUTTON --- */
+.theme-btn {
+    background: var(--secondary-bg);
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-soft);
+}
+
+.theme-btn:hover { transform: scale(1.1); }
+
+/* --- 4. HERO SECTION --- */
+.hero {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    padding: 0 20px;
+    margin-top: 80px; /* Offset for fixed header */
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.03em;
+}
+
+.highlight {
+    color: var(--primary-color);
+}
+
+.hero-content p {
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto 2.5rem auto;
+    opacity: 0.8;
+}
+
+/* Buttons */
+.cta-group { display: flex; gap: 1rem; justify-content: center; }
+
+.btn {
+    text-decoration: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn.primary {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+}
+
+.btn.secondary {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+}
+
+.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+
+/* Background Shapes */
+.shape {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: -1;
+    opacity: 0.5;
+}
+
+.shape-1 {
+    width: 300px; height: 300px;
+    background: var(--primary-color);
+    top: 10%; left: -100px;
+}
+
+.shape-2 {
+    width: 400px; height: 400px;
+    background: #ec4899; /* Pinkish */
+    bottom: 10%; right: -150px;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.85rem;
+    opacity: 0.6;
+}
+
+/* --- 5. ANIMATIONS --- */
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-pop-in { animation: popIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+.animate-slide-up { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+
+.delay-1 { animation-delay: 0.2s; }
+.delay-2 { animation-delay: 0.4s; }

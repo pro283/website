@@ -1,0 +1,195 @@
+/* Ensure global styles from style.css are loaded first */
+
+.downloader-container {
+    max-width: 900px;
+    margin: 120px auto 40px auto;
+    padding: 0 20px;
+    text-align: center;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.page-header p {
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+/* --- Input Section --- */
+.input-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 40px;
+}
+
+#video-url {
+    flex-grow: 1;
+    padding: 12px 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+#video-url:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+#fetch-btn {
+    width: 200px;
+    position: relative;
+}
+
+/* Loading Spinner Style */
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top: 4px solid #fff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: none; /* Hidden by default */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#fetch-btn.loading .btn-text { display: none; }
+#fetch-btn.loading .spinner { display: block; margin: 0 auto; }
+
+
+/* --- Video Card --- */
+.video-card {
+    display: flex;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow-soft);
+    text-align: left;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.thumbnail-area {
+    width: 40%;
+    min-width: 300px;
+    overflow: hidden;
+}
+
+.thumbnail-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.details-area {
+    width: 60%;
+    padding: 25px;
+}
+
+.video-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 20px;
+    line-height: 1.3;
+}
+
+.formats-list {
+    margin-top: 15px;
+}
+
+.formats-list h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.format-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.format-option:last-child {
+    border-bottom: none;
+}
+
+.format-label {
+    font-weight: 500;
+}
+
+.format-size {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-right: auto; /* Push the download button to the right */
+    padding-left: 15px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Status Messages */
+.status-box {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.status-box.success {
+    background-color: #d1fae5; /* Green light */
+    color: #065f46; /* Green dark */
+}
+
+body.dark-theme .status-box.success {
+    background-color: #065f46;
+    color: #d1fae5;
+}
+
+.status-box.error {
+    background-color: #fee2e2; /* Red light */
+    color: #991b1b; /* Red dark */
+}
+
+body.dark-theme .status-box.error {
+    background-color: #991b1b;
+    color: #fee2e2;
+}
+
+
+/* --- Media Queries for Responsiveness --- */
+@media (max-width: 768px) {
+    .video-card {
+        flex-direction: column;
+    }
+    .thumbnail-area, .details-area {
+        width: 100%;
+        min-width: auto;
+    }
+    .thumbnail-area {
+        max-height: 200px;
+    }
+    .input-section {
+        flex-direction: column;
+    }
+    #fetch-btn {
+        width: 100%;
+    }
+}

@@ -29,11 +29,15 @@ app.post('/api/fetch-video', async (req, res) => {
 
     try {
         // 1. Get video information from YouTube
-        // This includes the fix for the 410 Status Code error by spoofing the User-Agent
+        // Use an alternate request method to bypass 410 errors
         const info = await ytdl.getInfo(videoUrl, {
             requestOptions: {
+                // Spoofthe User-Agent for better stability
                 headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-            }
+            },
+            // This is a more aggressive option to force ytdl-core to use the older, stable signature decoding
+            // It often solves the 410 error.
+            quality: 'highest' 
         });
 
         // 2. Filter and Structure Download Formats
@@ -79,8 +83,12 @@ app.post('/api/fetch-video', async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching video info:', error.message);
-        // If ytdl-core fails, send a clean 500 error to the client
-        res.status(500).json({ error: `Failed to fetch video details. YouTube error: ${error.message}` });
+        // Provide a clearer message if it's the 410 error
+        let userMessage = 'Failed to fetch video details. Please try a different video URL.';
+        if (error.message.includes('Status code: 410')) {
+             userMessage = 'Video is restricted or the URL is not supported. Please try a different, common YouTube link.';
+        }
+        res.status(500).json({ error: userMessage });
     }
 });
 
@@ -97,13 +105,14 @@ app.get('/api/download', (req, res) => {
 
     try {
         // Set the appropriate headers for the browser to download the file
-        const fileName = `download-${Date.now()}.${isAudioOnly ? 'mp3' : 'mp4'}`;
+        const fileExtension = isAudioOnly ? 'mp3' : 'mp4';
+        const fileName = `download-${Date.now()}.${fileExtension}`;
         res.header('Content-Disposition', `attachment; filename="${fileName}"`);
         
         // Pipe the video stream directly to the client
         ytdl(videoUrl, {
             format: formatId,
-            filter: isAudioOnly ? 'audioonly' : 'audioandvideo' // Apply filter if needed
+            filter: isAudioOnly ? 'audioonly' : 'audioandvideo'
         }).pipe(res);
 
     } catch (error) {

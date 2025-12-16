@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     
     // 🛑 IMPORTANT: Update the API URL to your live Render service 
-    const RENDER_API_URL = 'https://elvryn.onrender.com';
+    const RENDER_API_URL = 'https://api.elvryn.xyz';
 
     // Select all necessary elements
     const videoUrlInput = document.getElementById('video-url');

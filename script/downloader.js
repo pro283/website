@@ -1,81 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ToolHub - Video Downloader</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style/style.css">
-    <link rel="stylesheet" href="style/downloader.css"> </head>
-<body class="light-theme">
+document.addEventListener('DOMContentLoaded', () => {
+    // Select all necessary elements
+    const videoUrlInput = document.getElementById('video-url');
+    const fetchBtn = document.getElementById('fetch-btn');
+    const videoInfoCard = document.getElementById('video-info-card');
+    const videoTitle = document.getElementById('video-title');
+    const videoThumbnail = document.getElementById('video-thumbnail');
+    const statusMessage = document.getElementById('status-message');
+    
+    // --- SIMULATED DATA ---
+    // A placeholder for the video information we would get from a backend API
+    const simulatedVideoData = {
+        title: "Introduction to Modern Web Design (HTML/CSS/JS)",
+        thumbnailUrl: "https://via.placeholder.com/480x270/6366f1/FFFFFF?text=Awesome+Video+Thumbnail",
+        formats: [
+            { quality: "1080p", size: "150 MB" },
+            { quality: "720p", size: "90 MB" },
+            { quality: "MP3", size: "5 MB" }
+        ]
+    };
 
-    <nav class="navbar">
-        <div class="logo">ToolHub.</div>
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="#" class="active">Video Downloader</a></li>
-            <li><a href="file-converter.html">File Converter</a></li>
-        </ul>
-        <button id="theme-toggle" class="theme-btn" aria-label="Toggle Dark Mode">
-            <span class="icon">🌙</span>
-        </button>
-    </nav>
+    // --- FUNCTIONALITY ---
 
-    <main class="downloader-container">
-        <header class="page-header animate-slide-up">
-            <h1>Simple Video Downloader</h1>
-            <p>Paste your video link below and select the format you want.</p>
-        </header>
+    fetchBtn.addEventListener('click', () => {
+        const url = videoUrlInput.value.trim();
 
-        <section class="input-section animate-slide-up delay-1">
-            <input type="url" id="video-url" placeholder="Paste Video Link Here (e.g., YouTube URL)">
-            <button id="fetch-btn" class="btn primary">
-                <span class="btn-text">Fetch Video Info</span>
-                <span class="spinner"></span>
-            </button>
-        </section>
+        if (!url) {
+            displayStatus('Please enter a valid video link.', 'error');
+            return;
+        }
 
-        <section id="video-info-card" class="video-card hidden animate-slide-up delay-2">
-            <div class="thumbnail-area">
-                <img id="video-thumbnail" src="" alt="Video Thumbnail" class="thumbnail-img">
-            </div>
-            <div class="details-area">
-                <h2 id="video-title" class="video-title">Video Title Goes Here</h2>
-                <div class="formats-list">
-                    <h3>Available Downloads:</h3>
-                    
-                    <div class="format-option" data-quality="1080p">
-                        <span class="format-label">Video - 1080p MP4</span>
-                        <span class="format-size">~150 MB</span>
-                        <button class="btn download-btn">Download</button>
-                    </div>
-                    
-                    <div class="format-option" data-quality="720p">
-                        <span class="format-label">Video - 720p MP4</span>
-                        <span class="format-size">~90 MB</span>
-                        <button class="btn download-btn">Download</button>
-                    </div>
+        // 1. Start Loading State
+        fetchBtn.classList.add('loading');
+        videoInfoCard.classList.add('hidden');
+        statusMessage.classList.add('hidden');
+        
+        // 2. Simulate API Call Delay (3 seconds)
+        setTimeout(() => {
+            
+            // 3. End Loading State
+            fetchBtn.classList.remove('loading');
+            
+            // For a real app, you'd handle network errors here.
+            // For the demo, we always succeed.
 
-                    <div class="format-option" data-quality="mp3">
-                        <span class="format-label">Audio - MP3 (High Quality)</span>
-                        <span class="format-size">~5 MB</span>
-                        <button class="btn download-btn">Download MP3</button>
-                    </div>
-                </div>
-            </div>
-        </section>
+            loadVideoInfo(simulatedVideoData);
+            displayStatus('Video information fetched successfully!', 'success');
 
-        <section id="status-message" class="status-box hidden"></section>
+        }, 3000); // 3-second delay
+    });
 
-    </main>
+    // Function to populate the card with data
+    function loadVideoInfo(data) {
+        videoTitle.textContent = data.title;
+        videoThumbnail.src = data.thumbnailUrl;
+        
+        // This makes the card visible
+        videoInfoCard.classList.remove('hidden');
+    }
 
-    <footer>
-        <p>&copy; 2024 ToolHub. Built for efficiency.</p>
-    </footer>
+    // Function to handle the Download buttons
+    document.querySelectorAll('.download-btn').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const formatOption = event.target.closest('.format-option');
+            const quality = formatOption.getAttribute('data-quality');
+            
+            // SIMULATION of download start
+            // The actual download link would be generated by your backend here.
+            
+            alert(`Simulating download for: ${quality} format. A real download would start now!`);
+            
+            // In a real scenario, you would redirect the user to the generated file URL
+            // window.location.href = 'YOUR_BACKEND_GENERATED_DOWNLOAD_LINK';
+        });
+    });
 
-    <script src="script/script.js"></script> 
-    <script src="script/downloader.js"></script>
-</body>
-</html>
+    // Function to display status messages
+    function displayStatus(message, type) {
+        statusMessage.textContent = message;
+        statusMessage.classList.remove('hidden', 'success', 'error');
+        statusMessage.classList.add(type);
+    }
+});

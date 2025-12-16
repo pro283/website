@@ -7,16 +7,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <!-- FIXED: Absolute paths for CSS -->
     <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/downloader.css"> </head>
+    <link rel="stylesheet" href="/css/downloader.css">
+</head>
 <body class="light-theme">
 
     <nav class="navbar">
         <div class="logo">ToolHub.</div>
         <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="#" class="active">Video Downloader</a></li>
-            <li><a href="file-converter.html">File Converter</a></li>
+            <li><a href="/">Home</a></li>
+            <li><a href="/video-downloader" class="active">Video Downloader</a></li>
+            <li><a href="/file-converter.html">File Converter</a></li>
         </ul>
         <button id="theme-toggle" class="theme-btn" aria-label="Toggle Dark Mode">
             <span class="icon">🌙</span>
@@ -75,7 +78,8 @@
         <p>&copy; 2024 ToolHub. Built for efficiency.</p>
     </footer>
 
-    <script src="/script/script.js"></script> 
-    <script src="/script/downloader.js"></script>
+    <!-- FIXED: Absolute paths for JS -->
+    <script src="/js/script.js" defer></script>
+    <script src="/js/downloader.js" defer></script>
 </body>
 </html>

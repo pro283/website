@@ -1,24 +1,21 @@
 const express = require('express');
 const cors = require('cors');
-const ytdl = require('ytdl-core'); // The library for fetching YouTube info
+const ytdl = require('ytdl-core');
 
 const app = express();
 const port = process.env.PORT || 10000;
 
 // Middleware Setup
-app.use(express.json()); // To parse JSON bodies
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --- CORS Configuration (Simplest and most reliable for now) ---
-// Since we are using a custom subdomain (api.elvryn.xyz), 
-// the minimal 'app.use(cors());' is the safest way to ensure connections.
+// --- CORS Configuration (Allowing all origins for stability) ---
 app.use(cors());
 
 // --- Root Route (Health Check) ---
 app.get('/', (req, res) => {
     res.send('ToolHub API is Running.');
 });
-
 
 // --- REAL FETCH-VIDEO API ROUTE ---
 app.post('/api/fetch-video', async (req, res) => {
@@ -32,40 +29,33 @@ app.post('/api/fetch-video', async (req, res) => {
 
     try {
         // 1. Get video information from YouTube
-        const info = await ytdl.getInfo(videoUrl);
+        // This includes the fix for the 410 Status Code error by spoofing the User-Agent
+        const info = await ytdl.getInfo(videoUrl, {
+            requestOptions: {
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+            }
+        });
 
         // 2. Filter and Structure Download Formats
         const formats = [];
 
-        // --- Video Formats (Highest quality video-only stream combined with audio) ---
-        // Find the best quality video format that is NOT a dash video (combined video+audio)
-        const bestVideoFormat = ytdl.chooseFormat(info.formats, { 
-            quality: 'highestvideo', // Get highest quality video stream
-            filter: 'videoonly' // Ensure it is video only
-        });
-        
-        // Find the best quality audio stream
-        const bestAudioFormat = ytdl.chooseFormat(info.formats, {
-            quality: 'highestaudio', // Get highest quality audio stream
-            filter: 'audioonly' // Ensure it is audio only
-        });
-
-        // NOTE: We cannot provide a simple direct download link for video+audio combined 
-        // because ytdl-core typically serves them as separate streams (video-only and audio-only).
-        // For a true download, the server must combine them (which is complex).
-        // For simplicity and a working POC, we will offer the combined best video+audio format if available.
-        
+        // Find the best combined format (Video + Audio)
         const combinedFormat = ytdl.chooseFormat(info.formats, { 
-            quality: 'highest' // This often provides a combined stream
+            quality: 'highest'
         });
 
+        // Find the best audio-only format
+        const bestAudioFormat = ytdl.chooseFormat(info.formats, {
+            quality: 'highestaudio',
+            filter: 'audioonly'
+        });
 
+        // --- Video Format (Combined Highest Quality) ---
         if (combinedFormat) {
              formats.push({
                 quality: combinedFormat.qualityLabel || 'Highest Quality',
                 size: (combinedFormat.contentLength ? (combinedFormat.contentLength / (1024 * 1024)).toFixed(1) + ' MB' : 'Size N/A'),
-                // Link is a simplified placeholder that client-side code will handle
-                // In a real scenario, this link would trigger a server-side download stream.
+                // The link the frontend will use to initiate the download
                 link: `/api/download?url=${encodeURIComponent(videoUrl)}&format_id=${combinedFormat.itag}`
             });
         }
@@ -75,11 +65,11 @@ app.post('/api/fetch-video', async (req, res) => {
             formats.push({
                 quality: 'MP3 (Audio)',
                 size: (bestAudioFormat.contentLength ? (bestAudioFormat.contentLength / (1024 * 1024)).toFixed(1) + ' MB' : 'Size N/A'),
-                // Link is a simplified placeholder
+                // The link the frontend will use to initiate the download
                 link: `/api/download?url=${encodeURIComponent(videoUrl)}&format_id=${bestAudioFormat.itag}&audio_only=true`
             });
         }
-        
+
         // 3. Send structured data back to the frontend
         res.json({
             title: info.videoDetails.title,
@@ -89,27 +79,37 @@ app.post('/api/fetch-video', async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching video info:', error.message);
-        res.status(500).json({ error: 'Failed to fetch video details from YouTube.' });
+        // If ytdl-core fails, send a clean 500 error to the client
+        res.status(500).json({ error: `Failed to fetch video details. YouTube error: ${error.message}` });
     }
 });
 
 
-// --- Download Route (Placeholder for triggering the download) ---
+// --- Download Route (Initiates the actual file stream) ---
 app.get('/api/download', (req, res) => {
-    // NOTE: This is a simplified endpoint. For a real download, you would need
-    // to stream the video content here and set correct headers.
-    
-    // For now, we will simply redirect to the direct ytdl-core link 
-    // or provide instructions. This is often blocked by browsers/YouTube.
-    // The link generated in the frontend is usually meant for the server to handle.
-    
-    // We send a JSON instruction back to the user's browser as a placeholder
-    // for what the actual server-side download link would generate.
-    res.json({
-        message: "Download initiated successfully!",
-        videoUrl: req.query.url,
-        format_id: req.query.format_id
-    });
+    const videoUrl = req.query.url;
+    const formatId = req.query.format_id;
+    const isAudioOnly = req.query.audio_only === 'true';
+
+    if (!videoUrl || !formatId) {
+        return res.status(400).send('Missing video URL or format ID.');
+    }
+
+    try {
+        // Set the appropriate headers for the browser to download the file
+        const fileName = `download-${Date.now()}.${isAudioOnly ? 'mp3' : 'mp4'}`;
+        res.header('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        // Pipe the video stream directly to the client
+        ytdl(videoUrl, {
+            format: formatId,
+            filter: isAudioOnly ? 'audioonly' : 'audioandvideo' // Apply filter if needed
+        }).pipe(res);
+
+    } catch (error) {
+        console.error('Error initiating download:', error.message);
+        res.status(500).send('Failed to initiate download stream.');
+    }
 });
 
 

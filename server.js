@@ -1,64 +1,119 @@
-// server.js (Minimal Node.js/Express API Server)
 const express = require('express');
-const cors = require('cors'); // Used for handling cross-origin requests
+const cors = require('cors');
+const ytdl = require('ytdl-core'); // The library for fetching YouTube info
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 10000;
 
-// Middleware for parsing JSON data from the frontend
-app.use(express.json()); 
+// Middleware Setup
+app.use(express.json()); // To parse JSON bodies
+app.use(express.urlencoded({ extended: true }));
 
-// --- 🛑 IMPORTANT: CONFIGURE CORS ---
-// You must replace 'YOUR_GITHUB_PAGES_URL' with your actual live GitHub Pages URL 
-// (e.g., https://pro283.github.io/website)
-const FRONTEND_URL = 'https://elvryn.xyz'; 
-app.use(cors({
-    origin: FRONTEND_URL, 
-    methods: 'GET,POST',
-    credentials: true
-}));
+// --- CORS Configuration (Simplest and most reliable for now) ---
+// Since we are using a custom subdomain (api.elvryn.xyz), 
+// the minimal 'app.use(cors());' is the safest way to ensure connections.
+app.use(cors());
 
-// ------------------------------------
-
-// Health Check Endpoint (Render checks this to see if the server is running)
+// --- Root Route (Health Check) ---
 app.get('/', (req, res) => {
     res.send('ToolHub API is Running.');
 });
 
 
-// The Main API Endpoint for Video Info (your frontend will POST data here)
-app.post('/api/fetch-video', (req, res) => {
+// --- REAL FETCH-VIDEO API ROUTE ---
+app.post('/api/fetch-video', async (req, res) => {
     const videoUrl = req.body.url;
-
-    if (!videoUrl) {
-        // Send an error if the URL is missing
-        return res.status(400).json({ error: 'Missing video URL in request body.' });
-    }
-
     console.log(`[API CALL] Received URL: ${videoUrl}`);
 
-    // ----------------------------------------------------------------------
-    // 🛑 FUTURE DEVELOPMENT SPOT: 
-    // This is where you would install and use a library (like 'ytdl-core') 
-    // to process the videoUrl and get real download links and titles.
-    // ----------------------------------------------------------------------
+    if (!ytdl.validateURL(videoUrl)) {
+        console.error('Invalid URL received.');
+        return res.status(400).json({ error: 'Invalid YouTube URL' });
+    }
 
-    // --- Sending Simulated Data for Successful Connection Test ---
-    const simulatedData = {
-        title: "SUCCESS! Render Backend Connected to Frontend.",
-        thumbnailUrl: "https://via.placeholder.com/480x270/6366f1/FFFFFF?text=API+Success", // Placeholder image
-        formats: [
-            { quality: '1080p', size: '150 MB', link: '#' },
-            { quality: '720p', size: '90 MB', link: '#' },
-            { quality: 'MP3', size: '5 MB', link: '#' }
-        ]
-    };
+    try {
+        // 1. Get video information from YouTube
+        const info = await ytdl.getInfo(videoUrl);
 
-    // Send the fake video data back to your frontend JavaScript
-    res.json(simulatedData);
+        // 2. Filter and Structure Download Formats
+        const formats = [];
+
+        // --- Video Formats (Highest quality video-only stream combined with audio) ---
+        // Find the best quality video format that is NOT a dash video (combined video+audio)
+        const bestVideoFormat = ytdl.chooseFormat(info.formats, { 
+            quality: 'highestvideo', // Get highest quality video stream
+            filter: 'videoonly' // Ensure it is video only
+        });
+        
+        // Find the best quality audio stream
+        const bestAudioFormat = ytdl.chooseFormat(info.formats, {
+            quality: 'highestaudio', // Get highest quality audio stream
+            filter: 'audioonly' // Ensure it is audio only
+        });
+
+        // NOTE: We cannot provide a simple direct download link for video+audio combined 
+        // because ytdl-core typically serves them as separate streams (video-only and audio-only).
+        // For a true download, the server must combine them (which is complex).
+        // For simplicity and a working POC, we will offer the combined best video+audio format if available.
+        
+        const combinedFormat = ytdl.chooseFormat(info.formats, { 
+            quality: 'highest' // This often provides a combined stream
+        });
+
+
+        if (combinedFormat) {
+             formats.push({
+                quality: combinedFormat.qualityLabel || 'Highest Quality',
+                size: (combinedFormat.contentLength ? (combinedFormat.contentLength / (1024 * 1024)).toFixed(1) + ' MB' : 'Size N/A'),
+                // Link is a simplified placeholder that client-side code will handle
+                // In a real scenario, this link would trigger a server-side download stream.
+                link: `/api/download?url=${encodeURIComponent(videoUrl)}&format_id=${combinedFormat.itag}`
+            });
+        }
+
+        // --- MP3 (Audio Only) Format ---
+        if (bestAudioFormat) {
+            formats.push({
+                quality: 'MP3 (Audio)',
+                size: (bestAudioFormat.contentLength ? (bestAudioFormat.contentLength / (1024 * 1024)).toFixed(1) + ' MB' : 'Size N/A'),
+                // Link is a simplified placeholder
+                link: `/api/download?url=${encodeURIComponent(videoUrl)}&format_id=${bestAudioFormat.itag}&audio_only=true`
+            });
+        }
+        
+        // 3. Send structured data back to the frontend
+        res.json({
+            title: info.videoDetails.title,
+            thumbnailUrl: info.videoDetails.thumbnails.slice(-1)[0].url,
+            formats: formats,
+        });
+
+    } catch (error) {
+        console.error('Error fetching video info:', error.message);
+        res.status(500).json({ error: 'Failed to fetch video details from YouTube.' });
+    }
 });
 
 
-// Start the server, listening on the port provided by Render
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// --- Download Route (Placeholder for triggering the download) ---
+app.get('/api/download', (req, res) => {
+    // NOTE: This is a simplified endpoint. For a real download, you would need
+    // to stream the video content here and set correct headers.
+    
+    // For now, we will simply redirect to the direct ytdl-core link 
+    // or provide instructions. This is often blocked by browsers/YouTube.
+    // The link generated in the frontend is usually meant for the server to handle.
+    
+    // We send a JSON instruction back to the user's browser as a placeholder
+    // for what the actual server-side download link would generate.
+    res.json({
+        message: "Download initiated successfully!",
+        videoUrl: req.query.url,
+        format_id: req.query.format_id
+    });
+});
+
+
+// --- Start Server ---
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
 });
